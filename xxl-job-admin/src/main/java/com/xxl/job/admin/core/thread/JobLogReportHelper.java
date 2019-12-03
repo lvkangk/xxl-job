@@ -33,13 +33,13 @@ public class JobLogReportHelper {
             @Override
             public void run() {
 
-                // last clean log time
+                //上次删除日志的时间
                 long lastCleanLogTime = 0;
 
 
                 while (!toStop) {
 
-                    // 1、log-report refresh: refresh log report in 3 days
+                    //刷新近3天运行报表
                     try {
 
                         for (int i = 0; i < 3; i++) {
@@ -68,6 +68,7 @@ public class JobLogReportHelper {
                             xxlJobLogReport.setSucCount(0);
                             xxlJobLogReport.setFailCount(0);
 
+                            //从xxl_job_log查询统计当天各状态数量
                             Map<String, Object> triggerCountMap = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLogReport(todayFrom, todayTo);
                             if (triggerCountMap!=null && triggerCountMap.size()>0) {
                                 int triggerDayCount = triggerCountMap.containsKey("triggerDayCount")?Integer.valueOf(String.valueOf(triggerCountMap.get("triggerDayCount"))):0;
@@ -80,7 +81,7 @@ public class JobLogReportHelper {
                                 xxlJobLogReport.setFailCount(triggerDayCountFail);
                             }
 
-                            // do refresh
+                            //更新运行报表信息
                             int ret = XxlJobAdminConfig.getAdminConfig().getXxlJobLogReportDao().update(xxlJobLogReport);
                             if (ret < 1) {
                                 XxlJobAdminConfig.getAdminConfig().getXxlJobLogReportDao().save(xxlJobLogReport);
@@ -93,7 +94,7 @@ public class JobLogReportHelper {
                         }
                     }
 
-                    // 2、log-clean: switch open & once each day
+                    // 2、每天删除一次历史日志（可配置保留天数）
                     if (XxlJobAdminConfig.getAdminConfig().getLogretentiondays()>0
                             && System.currentTimeMillis() - lastCleanLogTime > 24*60*60*1000) {
 
@@ -133,6 +134,7 @@ public class JobLogReportHelper {
 
             }
         });
+        //守护线程
         logrThread.setDaemon(true);
         logrThread.setName("xxl-job, admin JobLogReportHelper");
         logrThread.start();

@@ -24,6 +24,7 @@ public class JobRegistryMonitorHelper {
 
 	private Thread registryThread;
 	private volatile boolean toStop = false;
+
 	public void start(){
 		registryThread = new Thread(new Runnable() {
 			@Override
@@ -31,18 +32,23 @@ public class JobRegistryMonitorHelper {
 				while (!toStop) {
 					try {
 						// auto registry group
+						//查出所有自动注册的执行器地址列表
 						List<XxlJobGroup> groupList = XxlJobAdminConfig.getAdminConfig().getXxlJobGroupDao().findByAddressType(0);
 						if (groupList!=null && !groupList.isEmpty()) {
 
 							// remove dead address (admin/executor)
+							//查出90秒未更新心跳的执行器地址id（死掉的地址）
 							List<Integer> ids = XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().findDead(RegistryConfig.DEAD_TIMEOUT, new Date());
 							if (ids!=null && ids.size()>0) {
+								//删除死掉的执行器地址
 								XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().removeDead(ids);
 							}
 
 							// fresh online address (admin/executor)
 							HashMap<String, List<String>> appAddressMap = new HashMap<String, List<String>>();
+							//查出所有90秒内更新过心跳的执行器列表
 							List<XxlJobRegistry> list = XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().findAll(RegistryConfig.DEAD_TIMEOUT, new Date());
+							//各个执行器地址列表放到appAddressMap
 							if (list != null) {
 								for (XxlJobRegistry item: list) {
 									if (RegistryConfig.RegistType.EXECUTOR.name().equals(item.getRegistryGroup())) {
@@ -61,6 +67,7 @@ public class JobRegistryMonitorHelper {
 							}
 
 							// fresh group address
+							//更新执行器地址表数据
 							for (XxlJobGroup group: groupList) {
 								List<String> registryList = appAddressMap.get(group.getAppName());
 								String addressListStr = null;
@@ -82,6 +89,7 @@ public class JobRegistryMonitorHelper {
 						}
 					}
 					try {
+						//睡30秒
 						TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);
 					} catch (InterruptedException e) {
 						if (!toStop) {
@@ -92,6 +100,7 @@ public class JobRegistryMonitorHelper {
 				logger.info(">>>>>>>>>>> xxl-job, job registry monitor thread stop");
 			}
 		});
+		//设置为守护线程
 		registryThread.setDaemon(true);
 		registryThread.setName("xxl-job, admin JobRegistryMonitorHelper");
 		registryThread.start();

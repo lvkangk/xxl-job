@@ -6,6 +6,7 @@ package com.xxl.job.core.util;
  */
 public class ShardingUtil {
 
+    //可以自动向子线程传递的ThreadLocal
     private static InheritableThreadLocal<ShardingVO> contextHolder = new InheritableThreadLocal<ShardingVO>();
 
     public static class ShardingVO {

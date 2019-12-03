@@ -24,7 +24,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
     @Override
     public void afterPropertiesSet() throws Exception {
 
-        // init JobHandler Repository
+        //注册JobHandler
         initJobHandlerRepository(applicationContext);
 
         // refresh GlueFactory
@@ -47,7 +47,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
             return;
         }
 
-        // init job handler action
+        //获取有JobHandler注解的类
         Map<String, Object> serviceBeanMap = applicationContext.getBeansWithAnnotation(JobHandler.class);
 
         if (serviceBeanMap!=null && serviceBeanMap.size()>0) {
@@ -58,6 +58,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                     if (loadJobHandler(name) != null) {
                         throw new RuntimeException("xxl-job jobhandler["+ name +"] naming conflicts.");
                     }
+                    //注册JobHandler：放到job-core的一个map中
                     registJobHandler(name, handler);
                 }
             }

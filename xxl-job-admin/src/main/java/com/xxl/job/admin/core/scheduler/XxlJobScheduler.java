@@ -25,22 +25,22 @@ public class XxlJobScheduler  {
 
 
     public void init() throws Exception {
-        // init i18n
+        //国际化
         initI18n();
 
-        // admin registry monitor run
+        //调度中心注册守护线程（一直守护着执行器的注册，更新执行器地址列表）
         JobRegistryMonitorHelper.getInstance().start();
 
-        // admin monitor run
+        //任务失败处理的守护线程
         JobFailMonitorHelper.getInstance().start();
 
-        // admin trigger pool start
+        //初始化任务调度线程池（快、慢）
         JobTriggerPoolHelper.toStart();
 
-        // admin log report start
+        //报表统计及历史日志删除守护线程
         JobLogReportHelper.getInstance().start();
 
-        // start-schedule
+        //预读线程和调度线程
         JobScheduleHelper.getInstance().start();
 
         logger.info(">>>>>>>>> init xxl-job admin success.");
@@ -77,19 +77,19 @@ public class XxlJobScheduler  {
     // ---------------------- executor-client ----------------------
     private static ConcurrentMap<String, ExecutorBiz> executorBizRepository = new ConcurrentHashMap<String, ExecutorBiz>();
     public static ExecutorBiz getExecutorBiz(String address) throws Exception {
-        // valid
+        //检验地址
         if (address==null || address.trim().length()==0) {
             return null;
         }
 
-        // load-cache
+        //从缓存拿出次地址的ExecutorBiz
         address = address.trim();
         ExecutorBiz executorBiz = executorBizRepository.get(address);
         if (executorBiz != null) {
             return executorBiz;
         }
 
-        // set-cache
+        //创建XxlRpcReferenceBean
         XxlRpcReferenceBean referenceBean = new XxlRpcReferenceBean();
         referenceBean.setClient(NettyHttpClient.class);
         referenceBean.setSerializer(HessianSerializer.class);
@@ -103,8 +103,9 @@ public class XxlJobScheduler  {
         referenceBean.setInvokeCallback(null);
         referenceBean.setInvokerFactory(null);
 
+        //执行器注册的xxlRpcProvider的类就是ExecutorBiz，这是admin和执行器直接通过xxlRpc通信的逻辑类
         executorBiz = (ExecutorBiz) referenceBean.getObject();
-
+        //放入缓存
         executorBizRepository.put(address, executorBiz);
         return executorBiz;
     }
